@@ -1,12 +1,46 @@
 # React + Vite
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Selectors which force reloading
 
-Currently, two official plugins are available:
+Some times selectors can force elements to re-render even though action seems to not be related, for example lets see this selector
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```js
+export const selectKitchen = createSelector(selectFurniture, (furniture) => furniture.kitchen);
+```
 
-## Expanding the ESLint configuration
+There's nothing wrong with it, it returns ```kitchen``` from state, problem is if it's used to pick values from ```kitchen``` instead of using an other selector
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```js
+import { useSelector } from "react-redux";
+import { selectKitchen, selectRoomsChairs } from "../../store/selectors";
+
+export const Header = () => {
+    const chairs = useSelector(selectKitchen).chairs;
+    const roomChairs = useSelector(selectRoomsChairs);
+    console.log('render header');
+    
+    return (
+        <header>
+            <article>
+                <h1>Common furniture</h1>
+                <article>
+                    <h2>Kitchen</h2>
+                    <p>Chairs: {chairs}</p>
+                </article>
+                <article>
+                    <h2>Rooms</h2>
+                    <p>Chairs: {roomChairs}</p>
+                </article>
+            </article>
+        </header>
+    );
+}
+```
+
+With this implementation ```Header``` would be re-render each time a ```chair``` or a ```table``` is added to the store even though ```Header``` doesn't seem to be related with ```tables```, if selector was coded like this
+
+```js
+export const selectKitchenChairs = createSelector(selectKitchen, (kitchen) => kitchen.chairs);
+```
+
+```Footer``` wouldn't be re-render.
